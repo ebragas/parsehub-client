@@ -1,19 +1,9 @@
 import requests
 import json
 import logging
-from csv import DictReader
 from datetime import datetime
 
-# What's this client going to be able to do?
-# Get projects
-# Get runs
-# Get data from run
-
-# classes:
-# Client
-# Project
-# Run
-
+from utils import _parse_response_data
 
 class ParseHubClient(object):
     
@@ -41,7 +31,7 @@ class ParseHubClient(object):
             'include_options': include_options
         }
         response = requests.get(project_endpoint, params=params)
-        project = ParseHubProject(**response.json())
+        project = ParseHubProject(client=self, **response.json())
         return project 
 
     def list_projects(self, offset=0, limit=2, include_options=0):
@@ -58,14 +48,14 @@ class ParseHubClient(object):
         # return response
         project_list = []
         for project_json in response.json()['projects']:
-            project_list.append(ParseHubProject(**project_json))
+            project_list.append(ParseHubProject(client=self, **project_json))
 
         return project_list
 
 
 class ParseHubProject(object):
     '''A single ParseHub Project'''
-    def __init__(self, *initial_data, **kwargs):
+    def __init__(self, client, *initial_data, **kwargs):
 
         for dictionary in initial_data:
             for key in dictionary:
@@ -78,6 +68,27 @@ class ParseHubProject(object):
             self.last_ready_run = ParseHubRun(**self.last_ready_run)
         except AttributeError:
             raise AttributeError # until I know when this happens
+
+    def run(self, start_url=None, start_template=None, start_value_override=None, send_email=None):
+        '''Documentation: https://www.parsehub.com/docs/ref/api/v2/?python#run-a-project'''
+        project_run_endpoint = f"https://www.parsehub.com/api/v2/projects/{self.project_token}/run"
+        params = {
+            "api_key": self.client.api_key,
+            "start_url": start_url,
+            "start_template": start_template,
+            "start_value_override": start_value_override,
+            "send_email": send_email
+        }
+        response = requests.post(project_run_endpoint, data=params)
+        return ParseHubRun(client=self.client, **response.json())
+
+    def get_last_ready_data(self, format='json'):
+        '''Documentation: https://www.parsehub.com/docs/ref/api/v2/?python#get-last-ready-data'''
+        last_ready_endpoint = f'https://www.parsehub.com/api/v2/projects/{self.project_token}/last_ready_run/data'
+        params = {"api_key": self.api_key, "format": format}
+        
+        response = requests.get(last_ready_endpoint, params=params)
+        return _parse_response_data(response, format)
 
 
 class ParseHubRun(object):
@@ -106,11 +117,7 @@ class ParseHubRun(object):
         params = {'api_key': self.client.api_key, 'format': format}
         
         response = requests.get(run_data_endpoint, params=params)
-        if format == 'json':
-            return response.json()
-        else:
-            data = DictReader(response.text.splitlines())
-            return list(data)
+        return _parse_response_data(response, format)
 
     def cancel(self):
         '''Documentation: https://www.parsehub.com/docs/ref/api/v2/?python#cancel-a-run'''
