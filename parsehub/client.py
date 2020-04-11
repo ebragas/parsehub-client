@@ -57,6 +57,8 @@ class ParseHubProject(object):
     '''A single ParseHub Project'''
     def __init__(self, client, *initial_data, **kwargs):
 
+        self.client = client
+
         for dictionary in initial_data:
             for key in dictionary:
                 setattr(self, key, dictionary[key])
@@ -68,6 +70,14 @@ class ParseHubProject(object):
             self.last_ready_run = ParseHubRun(client=client, **self.last_ready_run)
         except AttributeError:
             raise AttributeError # until I know when this happens
+
+        self.run_list = []
+        for run in kwargs.get('run_list', []):
+            self.run_list.append(ParseHubRun(client=self.client, **run))
+
+    def get(self):
+        # TODO: reinit the object instead
+        return self.client.get_project(self.token)
 
     def run(self, start_url=None, start_template=None, start_value_override=None, send_email=None):
         '''Documentation: https://www.parsehub.com/docs/ref/api/v2/?python#run-a-project'''
@@ -129,7 +139,7 @@ class ParseHubRun(object):
     def delete(self):
         '''Documentation: https://www.parsehub.com/docs/ref/api/v2/?python#delete-a-run'''
         delete_run_endpoint = f'https://www.parsehub.com/api/v2/runs/{self.run_token}'
-        params = {"api_key": self.client.api_key}
+        params = {'api_key': self.client.api_key}
         
         response = requests.delete(delete_run_endpoint, params=params)
         return response.json()
