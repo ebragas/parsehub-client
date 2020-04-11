@@ -65,7 +65,7 @@ class ParseHubProject(object):
 
         # value formatting
         try:
-            self.last_ready_run = ParseHubRun(**self.last_ready_run)
+            self.last_ready_run = ParseHubRun(client=client, **self.last_ready_run)
         except AttributeError:
             raise AttributeError # until I know when this happens
 
