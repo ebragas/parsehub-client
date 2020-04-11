@@ -3,7 +3,7 @@ import json
 import logging
 from datetime import datetime
 
-from utils import _parse_response_data
+from .utils import _parse_response_data
 
 class ParseHubClient(object):
     

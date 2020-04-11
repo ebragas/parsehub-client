@@ -9,7 +9,7 @@ README = (HERE / "README.md").read_text()
 
 setup(
     name="parsehub-client",
-    version="0.0.1",
+    version="0.0.2",
     description="ParseHub API client",
     long_description=README,
     long_description_content_type="text/markdown",
