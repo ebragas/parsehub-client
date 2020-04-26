@@ -65,11 +65,8 @@ class ParseHubProject(object):
         for key in kwargs:
             setattr(self, key, kwargs[key])
 
-        # value formatting
-        try:
+        if self.last_ready_run:
             self.last_ready_run = ParseHubRun(client=client, **self.last_ready_run)
-        except AttributeError:
-            raise AttributeError # until I know when this happens
 
         self.run_list = []
         for run in kwargs.get('run_list', []):
